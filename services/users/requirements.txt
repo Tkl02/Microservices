@@ -1,0 +1,25 @@
+# API
+fastapi
+
+# Server running of fastAPI
+uvicorn[standard]
+
+# data validation and configs
+pydantic
+pydantic-settings
+
+# ORM e driver of postgres data base
+sqlalchemy
+psycopg2-binary
+
+# Para hashing de senhas
+passlib[bcrypt]
+
+# for tokens validation
+python-jose[cryptography]
+
+#client for rabbitmq comunication
+pika
+
+# validator
+email-validator

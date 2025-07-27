@@ -1,0 +1,116 @@
+# version of docker compose
+version: '3.8'
+
+# Project services
+services:
+  # postegre db implemeentation
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      - POSTEGRE_DB=${POSTEGRE_DB}
+      - POSTEGRE_USER=${POSTEGRE_USER}
+      - POSTEGRE_PASSWORD=${POSTEGRE_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+    expose:
+      - "5432"
+
+  mysql-db:
+    image: mysql:8.9
+    container_name: mysql-db
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROO_PASSWORD=${MYSQL_ROO_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql/data
+    networks:
+      - microservices-net
+    expose:
+      - "3306"
+  
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - microservices-net
+
+# microservices aplication
+
+  users-service:
+    build:
+      context: ./services/users
+      dockerfile: Dockerfile
+    container_name: users-service
+    ports:
+      - "8001:80"
+    depends_on:
+      - postgres-db
+      - rabbitmq
+    volumes:
+      - ./services/users/app:/app
+    env_file:
+      - .env
+    networks:
+      - microservices-net
+
+  data-service:
+    build:
+      context: ./services/data
+      dockerfile: Dockerfile
+    container_name: data-service
+    depends_on:
+      - mysql-db
+    volumes:
+      - ./services/data/app:/app
+    env_file:
+      - .env
+    networks:
+      - microservices-net
+  
+  notification-service:
+    build:
+      context: ./services/notification
+      dockerfile: Dockerfile
+    container_name: notification-service
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./services/notifications/app:/app
+    env_file:
+      - .env
+    networks:
+      - microservices-net
+  
+# API gateway
+
+  api-gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8000:80"
+    depends_on:
+      - users-service
+      - data-service
+    networks:
+      - microservices-net
+
+# Volumes and redes
+volumes:
+  postgres_data:
+  mysql_data:
+networks:
+  microservices-net:
+    driver: bridge
