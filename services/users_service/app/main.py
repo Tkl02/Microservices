@@ -10,10 +10,11 @@ import database
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="Serviço de Usuários")
+get = app.get
 
 @app.get("/", summary="Health Check", tags=["Root"])
 def read_root():
-    return {"service": "users-service", "status": "OK"}
+    return {"service": "users-service", "status": "OK", "msg":"O PAI TA ON"}
 
 @app.post("/auth/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED, summary="Registrar um novo usuário", tags=["Auth"])
 def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
@@ -31,3 +32,4 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(database.get_d
 def login_user(user_data: schemas.UserLogin, db: Session = Depends(database.get_db)):
     # Lógica do login será implementada no próximo passo
     return {"access_token": "placeholder_for_real_jwt", "token_type": "bearer"}
+
